@@ -1,3 +1,14 @@
+interface Passport {
+  byr?: string;
+  iyr?: string;
+  eyr?: string;
+  hgt?: string;
+  hcl?: string;
+  ecl?: string;
+  pid?: string;
+  cid?: string;
+}
+
 const requiredFields = [
   "byr",
   "iyr",
@@ -8,14 +19,8 @@ const requiredFields = [
   "pid",
 ] as const;
 
-function isPassportValid(passport: Record<string, string>) {
-  for (const r of requiredFields) {
-    if (!(r in passport)) {
-      console.log("missing:", r);
-      return false;
-    }
-  }
-  return true;
+function isPassportValid(passport: Set<keyof Passport>) {
+  return (passport.size === 7 && !passport.has("cid")) || passport.size === 8;
 }
 
 async function start() {
@@ -23,26 +28,30 @@ async function start() {
     new URL("input.txt", import.meta.url)
   );
   const lines = fileContent.split("\r\n");
-  let passport: Record<string, string> = {};
+  const passport = new Set<keyof Passport>();
+
   let valid = 0;
   let passportCount = 0;
+
+  function processPassport() {
+    if (isPassportValid(passport)) {
+      valid += 1;
+    }
+    passportCount++;
+    passport.clear();
+  }
+
   for (const line of lines) {
-    if (line.length === 0) {
-      passportCount++;
-      if (isPassportValid(passport)) {
-        valid += 1;
-      }
-      passport = {};
-    } else {
+    if (line.length > 0) {
       for (const entry of line.split(" ")) {
-        const [key, value] = entry.split(":");
-        passport[key] = value;
+        const [key] = entry.split(":");
+        passport.add(key as keyof Passport);
       }
+    } else {
+      processPassport();
     }
   }
-  if (isPassportValid(passport)) {
-    valid += 1;
-  }
+  processPassport();
   console.log(`${valid}/${passportCount}`);
 }
 
