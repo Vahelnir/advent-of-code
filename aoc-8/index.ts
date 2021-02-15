@@ -52,8 +52,6 @@ function runAndBreakOnLoop(rawInstructions: string[]) {
  * - graphs ?
  */
 function bruteForceRun(rawInstructions: string[]) {
-  let tryCounter = 0;
-
   let replaying = false;
   let swapInstruction = false;
   const tracked = [];
@@ -84,7 +82,6 @@ function bruteForceRun(rawInstructions: string[]) {
         replaying = true;
         swapInstruction = true;
         state = previous.state;
-        tryCounter++;
         continue;
       } else {
         throw new Error("chelou que t'arrives ici :shrug:");
@@ -126,7 +123,6 @@ function bruteForceRun(rawInstructions: string[]) {
       }
     }
   }
-  console.log(tryCounter);
   return state.accumulator;
 }
 
