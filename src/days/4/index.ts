@@ -18,14 +18,14 @@ function solveFirst(lines: string[]) {
 	const values = lines[0].split(",");
 	const boards = getBoardsFromLines(lines);
 
-	mainLoop: for (const value of values) {
+	for (const value of values) {
 		for (const board of boards) {
 			Board.draw(board, value);
 
 			if (Board.hasWon(board)) {
 				const sum = Board.sumRemainingValues(board);
 				console.log("first:", +value, sum, +value * sum);
-				break mainLoop;
+				return;
 			}
 		}
 	}
