@@ -23,31 +23,22 @@ function updateFishList(fishList: number[]) {
   return [...rest, first + beforeLast, last, 0];
 }
 
-function solveFirst(lines: string[]) {
+function getFishCountAfterDays(lines: string[], days: number) {
   let fishList = parseFishStates(lines);
-  for (let day = 0; day < 80; day++) {
+  for (let day = 0; day < days; day++) {
     const fishToSpawn = fishList[0];
     fishList = updateFishList(fishList);
     fishList[8] += fishToSpawn;
   }
-  console.log(
-    "first:",
-    fishList.reduce((sum, count) => sum + count, 0)
-  );
+  return fishList.reduce((sum, count) => sum + count, 0);
+}
+
+function solveFirst(lines: string[]) {
+  console.log("first:", getFishCountAfterDays(lines, 80));
 }
 
 function solveSecond(lines: string[]) {
-  let fishList = parseFishStates(lines);
-
-  for (let day = 0; day < 256; day++) {
-    const fishToSpawn = fishList[0];
-    fishList = updateFishList(fishList);
-    fishList[8] += fishToSpawn;
-  }
-  console.log(
-    "second:",
-    fishList.reduce((sum, count) => sum + count, 0)
-  );
+  console.log("second:", getFishCountAfterDays(lines, 256));
 }
 
 export const run: DayEntryPoint = (input) => {
