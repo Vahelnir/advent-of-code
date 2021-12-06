@@ -1,11 +1,5 @@
 import { DayEntryPoint } from "../../types/DayEntryPoint";
 
-type Fish = { daysUntilSpawn: number };
-
-function createFish(daysUntilSpawn = 8): Fish {
-  return { daysUntilSpawn };
-}
-
 function parseFishStates(lines: string[]): number[] {
   return lines[0]
     .split(",")
