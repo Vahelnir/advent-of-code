@@ -27,7 +27,7 @@ function solveSecond(lines: string[]) {
     .sort((a, b) => a - b);
   const mean = positions.reduce(sum, 0) / positions.length;
   const ceilMean = Math.ceil(mean);
-  const floorMean = Math.floor(mean);
+  const floorMean = ceilMean - 1;
   const getFuelCostToTarget = (target: number) =>
     positions
       .map((position) => Math.abs(position - target))
