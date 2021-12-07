@@ -3,7 +3,7 @@ import { DayEntryPoint } from "../../types/DayEntryPoint";
 const sum = (sum: number, value: number) => sum + value;
 
 function getFuelCost(movement: number): number {
-  return Array.from({ length: movement }, (_, key) => key + 1).reduce(sum, 0);
+  return (movement * (movement + 1)) / 2;
 }
 
 function solveFirst(lines: string[]) {
