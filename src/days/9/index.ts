@@ -64,16 +64,16 @@ function solveFirst(lines: string[]) {
   );
 }
 
-function getBassinSize(grid: Cell[][], cell: Cell): Cell[] {
+function getBasinSize(grid: Cell[][], cell: Cell): Cell[] {
   if (cell.checked || cell.value === 9) {
     return [];
   }
   cell.checked = true;
   const adjacentCells = getAdjacentCells(grid, cell.position);
-  const bassinCells = adjacentCells
+  const basinCells = adjacentCells
     .filter((adjacentCell) => adjacentCell.value < 9)
-    .flatMap((cell) => getBassinSize(grid, cell));
-  return [cell, ...bassinCells];
+    .flatMap((cell) => getBasinSize(grid, cell));
+  return [cell, ...basinCells];
 }
 
 function solveSecond(lines: string[]) {
@@ -81,11 +81,11 @@ function solveSecond(lines: string[]) {
   const lowestCells = getLowestCells(grid);
 
   const allSums: number[] = [];
-  const bassins: Cell[][] = [];
+  const basins: Cell[][] = [];
   for (const lowestCell of lowestCells) {
-    const bassin = getBassinSize(grid, lowestCell);
-    bassins.push(bassin);
-    allSums.push(bassin.length);
+    const basin = getBasinSize(grid, lowestCell);
+    basins.push(basin);
+    allSums.push(basin.length);
   }
 
   console.log(
@@ -95,7 +95,6 @@ function solveSecond(lines: string[]) {
       .slice(0, 3)
       .reduce((acc, sum) => acc * sum, 1)
   );
-  console.log(allSums);
 
   // DEBUG: generates the grid with colors representing the bassins
   //   const finalGrid = grid.map((row) => row.map((cell) => cell.value));
