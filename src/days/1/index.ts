@@ -1,24 +1,26 @@
 import { DayEntryPoint } from "../../types/DayEntryPoint";
 
+export type Elf = { calories: number[]; total_calories: number };
+
 export const run: DayEntryPoint = (input) => {
   const calories = input.split("\n");
-  const elves: { calories: number[]; total_calories: number }[] = [];
+  const elves: Elf[] = [];
 
-  let elveIndex = 0;
+  let elf_index = 0;
   for (const str_calory of calories) {
     if (str_calory.length === 0) {
-      elveIndex++;
+      elf_index++;
       continue;
     }
 
     const calory = +str_calory;
-    let currentElfArray = elves[elveIndex];
-    if (!currentElfArray) {
-      currentElfArray = { calories: [calory], total_calories: calory };
-      elves.push(currentElfArray);
+    let current_elf = elves[elf_index];
+    if (!current_elf) {
+      current_elf = { calories: [calory], total_calories: calory };
+      elves.push(current_elf);
     } else {
-      currentElfArray.calories.push(calory);
-      currentElfArray.total_calories += calory;
+      current_elf.calories.push(calory);
+      current_elf.total_calories += calory;
     }
   }
 
@@ -27,5 +29,8 @@ export const run: DayEntryPoint = (input) => {
   );
 
   console.log("the first answer is", first.total_calories);
-  console.log("the second answer is", first.total_calories + second.total_calories + third.total_calories);
+  console.log(
+    "the second answer is",
+    first.total_calories + second.total_calories + third.total_calories
+  );
 };
