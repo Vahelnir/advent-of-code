@@ -1,43 +1,31 @@
 import { DayEntryPoint } from "../../types/DayEntryPoint";
 
-const linesToDepths = (lines: string[]) =>
-  lines.map((line) => Number.parseInt(line, 10));
-
-function solveFirst(lines: string[]) {
-  const depths = linesToDepths(lines);
-  let count = 0;
-  let previousDepth = depths[0];
-  for (const depth of depths.slice(1)) {
-    if (depth > previousDepth) {
-      count++;
-    }
-    previousDepth = depth;
-  }
-  console.log("first:", count);
-}
-
-function solveSecond(lines: string[]) {
-  const sliceSize = 3;
-
-  const depths = linesToDepths(lines);
-  let previousSum = Infinity;
-  let count = 0;
-  for (let i = 0; i < depths.length - 3; i++) {
-    const sum = depths
-      .slice(i, i + sliceSize)
-      .map((depth) => (isNaN(depth) ? 0 : depth))
-      .reduce((sum, depth) => sum + depth, 0);
-
-    if (sum > previousSum) {
-      count++;
-    }
-    previousSum = sum;
-  }
-  console.log("second:", count);
-}
-
 export const run: DayEntryPoint = (input) => {
-  const lines = input.split("\n");
-  solveFirst([...lines]);
-  solveSecond([...lines]);
+  const calories = input.split("\n");
+  const elves: { calories: number[]; total_calories: number }[] = [];
+
+  let elveIndex = 0;
+  for (const str_calory of calories) {
+    if (str_calory.length === 0) {
+      elveIndex++;
+      continue;
+    }
+
+    const calory = +str_calory;
+    let currentElfArray = elves[elveIndex];
+    if (!currentElfArray) {
+      currentElfArray = { calories: [calory], total_calories: calory };
+      elves.push(currentElfArray);
+    } else {
+      currentElfArray.calories.push(calory);
+      currentElfArray.total_calories += calory;
+    }
+  }
+
+  const [first, second, third] = elves.sort(
+    (elfA, elfB) => elfB.total_calories - elfA.total_calories
+  );
+
+  console.log("the first answer is", first.total_calories);
+  console.log("the second answer is", first.total_calories + second.total_calories + third.total_calories);
 };
