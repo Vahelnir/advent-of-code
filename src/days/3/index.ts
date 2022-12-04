@@ -1,4 +1,3 @@
-import { type } from "os";
 import { DayEntryPoint } from "../../types/DayEntryPoint";
 
 const types = [
