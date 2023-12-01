@@ -1,5 +1,7 @@
 import { DayEntryPoint } from "../../types/DayEntryPoint";
 
+type ExtractedDigits = [string | undefined, string | undefined];
+
 const STRING_DIGITS = [
   "one",
   "two",
@@ -11,6 +13,16 @@ const STRING_DIGITS = [
   "eight",
   "nine",
 ];
+
+const STRING_DIGITS_REGEX = STRING_DIGITS.join("|");
+
+const EXTRACT_DIGIT_FROM_START_REGEX = new RegExp(
+  `([0-9]|${STRING_DIGITS_REGEX}).*`
+);
+
+const EXTRACT_DIGIT_FROM_END_REGEX = new RegExp(
+  `.*([0-9]|${STRING_DIGITS_REGEX})`
+);
 
 const getNumber = (str: string | undefined) => {
   if (!str) {
@@ -26,21 +38,15 @@ const getNumber = (str: string | undefined) => {
   return foundStringNumber.toString();
 };
 
-const extractDigits = (line: string): RegExpMatchArray | null => {
-  const stringDigits = STRING_DIGITS.join("|");
-  return line.match(
-    new RegExp(`([0-9]|${stringDigits})((.*)([0-9]|${stringDigits}))*`)
-  );
-};
+const extractDigits = (line: string): ExtractedDigits => [
+  line.match(EXTRACT_DIGIT_FROM_START_REGEX)?.[1],
+  line.match(EXTRACT_DIGIT_FROM_END_REGEX)?.[1],
+];
 
-const digitsToNumber = (match: RegExpMatchArray | null): string => {
-  if (!match) {
-    return "0";
-  }
-
-  const first = getNumber(match[1]);
-  const last = getNumber(match[4]);
-  return first + (last || first);
+const digitsToNumber = ([firstDigit, lastDigit]: ExtractedDigits): string => {
+  const first = getNumber(firstDigit);
+  const last = getNumber(lastDigit);
+  return first + last;
 };
 
 export const run: DayEntryPoint = (input) => {
