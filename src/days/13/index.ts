@@ -1,118 +1,96 @@
 import { DayEntryPoint } from "../../types/DayEntryPoint";
 
-type ArrayValue = { parent?: ArrayValue; content: Value[]; type: "array" };
-type NumberValue = { parent?: ArrayValue; content: number; type: "number" };
-type Value = ArrayValue | NumberValue;
+const DEBUG = false;
 
-type DeepArray<T> = (T | DeepArray<T>)[];
+const parsePacket = (rawPacket: string) => JSON.parse(rawPacket);
 
-function parse_array(block: string) {
-  let previous_array: ArrayValue | undefined;
-  for (const letter of block) {
-    if (letter === "[") {
-      const arr: Value = {
-        parent: previous_array,
-        content: [],
-        type: "array",
-      };
-      previous_array?.content.push(arr);
-      previous_array = arr;
-    } else if (letter === "]") {
-      if (!previous_array?.parent) {
-        continue;
-      }
-      previous_array = previous_array.parent;
-    } else if (letter === ",") {
-      continue;
-    } else {
-      previous_array?.content.push({
-        type: "number",
-        parent: previous_array,
-        content: +letter,
-      });
-    }
-  }
-  if (!previous_array) {
-    return undefined;
-  }
+const compareValues = (
+  left: number | unknown[],
+  right: number | unknown[],
+  nested = 0
+): 1 | 0 | -1 => {
+  const debug = (text: string, extraTab = 0) =>
+    DEBUG && console.log(" ".repeat(nested + extraTab) + text);
 
-  return unwrap_value(previous_array) as DeepArray<number>;
-}
+  debug(`- Compare ${JSON.stringify(left)} vs ${JSON.stringify(right)}`);
 
-function unwrap_value(value: Value): number | DeepArray<number> {
-  if (value.type === "array") {
-    return value.content.map(unwrap_value);
-  }
-  return value.content;
-}
-
-function is_in_order(
-  left: DeepArray<number>,
-  right: DeepArray<number>,
-  converted_to_array = false
-): boolean {
-  for (let i = 0; i < (converted_to_array ? 1 : left.length); i++) {
-    let left_value = left[i];
-    let right_value = right[i];
-    let converted_to_array = false;
-
-    if (left_value && !right_value) {
-      console.log("right is undefined, left =", left_value);
-      if (left.length > right.length) {
-        return false;
+  if (left instanceof Array && right instanceof Array) {
+    for (let i = 0; i < left.length; i++) {
+      const newLeft = left[i] as number | unknown[];
+      const newRight = right[i] as number | unknown[];
+      if (newRight === undefined) {
+        break;
       }
 
-      return true;
-    }
-
-    if (typeof left_value !== typeof right_value) {
-      if (typeof left_value === "number") {
-        left_value = [left_value];
-      } else {
-        right_value = [right_value];
-      }
-      converted_to_array = true;
-    }
-
-    if (left_value instanceof Array && right_value instanceof Array) {
-      const order = is_in_order(left_value, right_value, converted_to_array);
-      if (!order) {
-        return false;
+      const comparison = compareValues(newLeft, newRight, nested + 1);
+      if (comparison !== 0) {
+        return comparison;
       }
     }
-    if (left_value > right_value) {
-      console.log(
-        `left (${left_value}) value bigger than right (${right_value}) value`
-      );
-      return false;
+
+    if (left.length === right.length) {
+      return 0;
     }
-    // console.log("val", left[i], right[i]);
+    debug(
+      left.length < right.length
+        ? "- Left side ran out of items, so inputs are in the right order"
+        : "- Right side ran out of items, so inputs are not in the right order",
+      2
+    );
+    return left.length < right.length ? 1 : -1;
   }
-  return true;
-}
+
+  if (typeof left === "number" && typeof right === "number") {
+    if (left === right) {
+      return 0;
+    }
+    debug(
+      left < right
+        ? "- Left side is smaller, so inputs are in the right order"
+        : "- Right side is smaller, so inputs are not in the right order",
+      2
+    );
+    return left < right ? 1 : -1;
+  }
+
+  if (typeof left === "number") {
+    debug(`- Mixed types; convert left to [${left}] and retry comparison`, 2);
+    return compareValues([left], right, nested + 1);
+  }
+
+  debug(`- Mixed types; convert right to [${right}] and retry comparison`, 2);
+  return compareValues(left, [right], nested + 1);
+};
 
 export const run: DayEntryPoint = (input) => {
-  const blocks = input.split("\n\n").map((block) => block.split("\n"));
+  const rawBlocks = input.split("\n\n");
+  const blocks = rawBlocks.map((block, index) => {
+    console.log(`== Pair ${index + 1} == `);
+    const [rawFirst, rawSecond] = block.split("\n");
+    const left = parsePacket(rawFirst);
+    const right = parsePacket(rawSecond);
+    return [left, right];
+  });
 
-  let pair_index = 1;
-  let in_order_pairs: number[] = [];
-  for (const block of blocks) {
-    const [left, right] = block.map((block) => parse_array(block));
-    if (!left || !right) {
-      console.log("skipping...");
-      continue;
-    }
-    console.log(left, right);
-    const in_order = is_in_order(left, right);
-    if (in_order) {
-      in_order_pairs.push(pair_index);
-    }
-    pair_index++;
-    console.log(in_order);
-  }
   console.log(
-    "first part",
-    in_order_pairs,
-    in_order_pairs.reduce((sum, val) => sum + val, 0)
+    "first",
+    blocks
+      .map(([left, right], index) => {
+        const isOrdered = compareValues(left, right) === 1;
+        console.log();
+        return { index: index + 1, isOrdered };
+      })
+      .filter(({ isOrdered }) => isOrdered)
+      .reduce((acc, { index }) => acc + index, 0)
+  );
+
+  const orderedPackets = [...blocks.flat(), [[2]], [[6]]]
+    .sort((a, b) => compareValues(b, a))
+    .map((value) => JSON.stringify(value))
+    .map((packet, index): [string, number] => [packet, index]);
+  console.log(
+    "second",
+    ((orderedPackets.find(([packet]) => packet === "[[2]]")?.[1] ?? -1) + 1) *
+      ((orderedPackets.find(([packet]) => packet === "[[6]]")?.[1] ?? -1) + 1)
   );
 };
