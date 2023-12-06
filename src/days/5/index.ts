@@ -1,4 +1,3 @@
-import { loadavg } from "os";
 import { DayEntryPoint } from "../../types/DayEntryPoint";
 
 const toNumber = (v: string) => Number(v);
