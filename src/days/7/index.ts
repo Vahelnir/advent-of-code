@@ -24,12 +24,30 @@ const VALID_CARDS = [
   "A",
 ] as const;
 
-const getCardPower = (card: string) => {
+const JOKER_VALID_CARDS = [
+  "J",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "T",
+  "Q",
+  "K",
+  "A",
+] as const;
+
+const getCardPower = (card: string, useJoker = false) => {
   if (card.length !== 1) {
     throw new Error(`card '${card}' has more than one character`);
   }
 
-  const power = VALID_CARDS.indexOf(card as ValidCard);
+  const power = (useJoker ? JOKER_VALID_CARDS : VALID_CARDS).indexOf(
+    card as ValidCard,
+  );
   if (power === -1) {
     throw new Error(`card '${card}' is invalid`);
   }
@@ -37,24 +55,34 @@ const getCardPower = (card: string) => {
   return power;
 };
 
-const getHandPower = (hand: string) => {
+const getHandPower = (hand: string, useJoker = false) => {
   const defaultOccurrenceMap = VALID_CARDS.reduce(
     (acc, key) => ({ ...acc, [key]: 0 }),
     {} as Record<ValidCard, number>,
   );
-  const occurrenceMap = [...hand].reduce(
-    (map, card) => ({ ...map, [card]: map[card as ValidCard] + 1 }),
-    defaultOccurrenceMap,
-  );
+  const occurrenceMap = hand
+    .split("")
+    .reduce(
+      (map, card) => ({ ...map, [card]: map[card as ValidCard] + 1 }),
+      defaultOccurrenceMap,
+    );
 
-  const occurrences = Object.values(occurrenceMap);
+  let jokerCount = 0;
+  if (useJoker) {
+    jokerCount = occurrenceMap["J"];
+    occurrenceMap["J"] = 0;
+  }
+
+  const occurrences = Object.values(occurrenceMap).sort((a, b) => b - a);
+  occurrences[0] += jokerCount;
+  const maxCardCount = occurrences[0];
+
   if (occurrences.includes(3) && occurrences.includes(2)) {
     return 4;
   }
 
-  const maxPair = Math.max(...occurrences);
-  if (maxPair >= 3) {
-    return maxPair > 3 ? maxPair + 1 : maxPair;
+  if (maxCardCount >= 3) {
+    return maxCardCount > 3 ? maxCardCount + 1 : maxCardCount;
   }
 
   return occurrences.filter((occurrence) => occurrence === 2).length;
@@ -78,21 +106,38 @@ const sortHands = (a: Hand, b: Hand) => {
 export const run: DayEntryPoint = (input) => {
   const hands = input.split("\n").map((rawHand) => {
     const [hand, bid] = rawHand.split(" ");
+    const splitHand = hand.split("");
     return {
       hand,
       bid: Number(bid),
       power: getHandPower(hand),
-      cardPowers: hand.split("").map(getCardPower),
+      cardPowers: splitHand.map((card) => getCardPower(card)),
     } satisfies Hand;
   });
 
   const sortedHands = hands.slice().sort(sortHands);
   console.log(
-    sortedHands.map(({ hand, power }, index) => [index, hand, power]),
-  );
-
-  console.log(
     "first",
     sortedHands.reduce((sum, value, index) => sum + value.bid * (index + 1), 0),
+  );
+
+  const jokerHands = input.split("\n").map((rawHand) => {
+    const [hand, bid] = rawHand.split(" ");
+    const splitHand = hand.split("");
+    return {
+      hand,
+      bid: Number(bid),
+      power: getHandPower(hand, true),
+      cardPowers: splitHand.map((card) => getCardPower(card, true)),
+    } satisfies Hand;
+  });
+
+  const secondSortedHands = jokerHands.slice().sort(sortHands);
+  console.log(
+    "second",
+    secondSortedHands.reduce(
+      (sum, value, index) => sum + value.bid * (index + 1),
+      0,
+    ),
   );
 };
