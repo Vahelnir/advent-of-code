@@ -2,6 +2,76 @@ import { DayEntryPoint } from "../../types/DayEntryPoint";
 
 type Node = { name: string; left?: Node; right?: Node };
 
+const gcd2 = (a: number, b: number): number => {
+  if (!b) {
+    return b === 0 ? a : NaN;
+  }
+  return gcd2(b, a % b);
+};
+
+const gcd = (numbers: number[]) => {
+  return numbers.reduce((acc, number) => gcd2(number, acc), 0);
+};
+
+const lcm2 = (a: number, b: number) => {
+  return (a * b) / gcd2(a, b);
+};
+
+const lcm = (numbers: number[]) => {
+  return numbers.reduce((acc, number) => lcm2(number, acc), 1);
+};
+
+const solveFirst = (instructions: string[], nodeMap: Map<string, Node>) => {
+  const startingPoint = nodeMap.get("AAA");
+  if (!startingPoint) {
+    return;
+  }
+
+  let i = 0;
+  let nextNode = startingPoint;
+  while (true) {
+    if (nextNode.name === "ZZZ") {
+      break;
+    }
+
+    const direction = instructions[i % instructions.length];
+    if (direction === "L" && nextNode.left) {
+      nextNode = nextNode.left;
+    } else if (direction === "R" && nextNode.right) {
+      nextNode = nextNode.right;
+    }
+    i++;
+  }
+
+  return i;
+};
+
+const solveSecond = (instructions: string[], nodeMap: Map<string, Node>) => {
+  const startingPoints = [...nodeMap.values()].filter((node) =>
+    node.name.endsWith("A"),
+  );
+
+  const iterations = startingPoints.map((node) => {
+    let i = 0;
+    let nextNode = node;
+    while (true) {
+      if (nextNode.name.endsWith("Z")) {
+        return i;
+      }
+
+      const direction = instructions[i % instructions.length];
+      if (direction === "L" && nextNode.left) {
+        nextNode = nextNode.left;
+      } else if (direction === "R" && nextNode.right) {
+        nextNode = nextNode.right;
+      }
+      i++;
+    }
+  });
+
+  return lcm(iterations);
+};
+
 export const run: DayEntryPoint = (input) => {
   const lines = input.split("\n");
   const instructions = lines[0].split("");
@@ -28,25 +98,6 @@ export const run: DayEntryPoint = (input) => {
       node.right = getOrCreateNode(right);
     }
   }
-
-  const startingPoint = nodeMap.get("AAA");
-  if (!startingPoint) {
-    return;
-  }
-
-  let i = 0;
-  let nextNode = startingPoint;
-  while (true) {
-    if (nextNode.name === "ZZZ") {
-      break;
-    }
-    const direction = instructions[i % instructions.length];
-    if (direction === "L" && nextNode.left) {
-      nextNode = nextNode.left;
-    } else if (direction === "R" && nextNode.right) {
-      nextNode = nextNode.right;
-    }
-    i++;
-  }
-  console.log("first", i);
+  console.log("first", solveFirst(instructions, nodeMap));
+  console.log("second", solveSecond(instructions, nodeMap));
 };
