@@ -21,16 +21,15 @@ const lcm = (numbers: number[]) => {
   return numbers.reduce((acc, number) => lcm2(number, acc), 1);
 };
 
-const solveFirst = (instructions: string[], nodeMap: Map<string, Node>) => {
-  const startingPoint = nodeMap.get("AAA");
-  if (!startingPoint) {
-    return;
-  }
-
+const walkThrough = (
+  instructions: string[],
+  from: Node,
+  endCondition: (node: Node) => boolean,
+) => {
   let i = 0;
-  let nextNode = startingPoint;
+  let nextNode = from;
   while (true) {
-    if (nextNode.name === "ZZZ") {
+    if (endCondition(nextNode)) {
       break;
     }
 
@@ -46,28 +45,27 @@ const solveFirst = (instructions: string[], nodeMap: Map<string, Node>) => {
   return i;
 };
 
+const solveFirst = (instructions: string[], nodeMap: Map<string, Node>) => {
+  const startingPoint = nodeMap.get("AAA");
+  if (!startingPoint) {
+    return;
+  }
+
+  return walkThrough(
+    instructions,
+    startingPoint,
+    (node) => node.name === "ZZZ",
+  );
+};
+
 const solveSecond = (instructions: string[], nodeMap: Map<string, Node>) => {
   const startingPoints = [...nodeMap.values()].filter((node) =>
     node.name.endsWith("A"),
   );
 
-  const iterations = startingPoints.map((node) => {
-    let i = 0;
-    let nextNode = node;
-    while (true) {
-      if (nextNode.name.endsWith("Z")) {
-        return i;
-      }
-
-      const direction = instructions[i % instructions.length];
-      if (direction === "L" && nextNode.left) {
-        nextNode = nextNode.left;
-      } else if (direction === "R" && nextNode.right) {
-        nextNode = nextNode.right;
-      }
-      i++;
-    }
-  });
+  const iterations = startingPoints.map((node) =>
+    walkThrough(instructions, node, (node) => node.name.endsWith("Z")),
+  );
 
   return lcm(iterations);
 };
