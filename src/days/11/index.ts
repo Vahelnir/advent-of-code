@@ -1,27 +1,17 @@
 import { DayEntryPoint } from "../../types/DayEntryPoint";
 
 type Position = { x: number; y: number };
+type Cell = {
+  letter: string;
+  position: Position;
+};
 
-const expand = (universe: string[][]) => {
-  const duplicateColumns: number[] = [];
-  row: for (let x = 0; x < universe[0].length; x++) {
-    for (let y = 0; y < universe.length; y++) {
-      const cell = universe[y][x];
-      if (cell === "#") {
-        continue row;
-      }
-
-      if (y === universe.length - 1) {
-        duplicateColumns.push(x);
-      }
-    }
-  }
-
+const findEmptyRows = (universe: Cell[][]) => {
   const duplicateRows: number[] = [];
   column: for (let y = 0; y < universe.length; y++) {
     for (let x = 0; x < universe[0].length; x++) {
       const cell = universe[y][x];
-      if (cell === "#") {
+      if (cell.letter === "#") {
         continue column;
       }
 
@@ -30,35 +20,50 @@ const expand = (universe: string[][]) => {
       }
     }
   }
+  return duplicateRows;
+};
 
-  const newUniverse = universe.map((line) => line.slice());
+const findEmptyColumns = (universe: Cell[][]) => {
+  const duplicateColumns: number[] = [];
+  row: for (let x = 0; x < universe[0].length; x++) {
+    for (let y = 0; y < universe.length; y++) {
+      const cell = universe[y][x];
+      if (cell.letter === "#") {
+        continue row;
+      }
 
-  console.log(duplicateColumns, duplicateRows);
-  newUniverse.forEach((line) => {
-    duplicateColumns.forEach((c, index) => line.splice(c + index + 1, 0, "."));
-  });
+      if (y === universe.length - 1) {
+        duplicateColumns.push(x);
+      }
+    }
+  }
+  return duplicateColumns;
+};
 
-  const emptyRow = new Array(newUniverse[0].length).fill(".");
-  duplicateRows.forEach((r, index) => {
-    newUniverse.splice(r + index + 1, 0, emptyRow.slice());
-  });
+const isGalaxy = (cell: Cell) => cell.letter === "#";
 
-  return newUniverse;
+const expandGalaxies = (universe: Cell[][], expandTimes: number) => {
+  const duplicateColumns = findEmptyColumns(universe);
+  const duplicateRows = findEmptyRows(universe);
+
+  const starCells = universe.flat().filter(isGalaxy);
+  for (const starCell of starCells) {
+    starCell.position.x +=
+      duplicateColumns.filter((column) => starCell.position.x > column).length *
+      (expandTimes - 1);
+    starCell.position.y +=
+      duplicateRows.filter((row) => starCell.position.y > row).length *
+      (expandTimes - 1);
+  }
+  return starCells;
 };
 
 const manhattanDistance = (a: Position, b: Position) =>
   Math.abs(b.x - a.x) + Math.abs(b.y - a.y);
 
-export const run: DayEntryPoint = (input) => {
-  const universe = input.split("\n").map((line) => line.split(""));
-  const expandedUniverse = expand(universe);
-  const starPositions = expandedUniverse
-    .map((c, y) => c.map((v, x): [Position, string] => [{ x, y }, v]))
-    .flat()
-    .filter((v) => v[1] === "#");
-
-  const s = starPositions.reduce((map, [position], index) => {
-    starPositions.forEach(([pos], secondIndex) => {
+const getDistances = (starCells: FlatArray<Cell[][], 1>[]) => {
+  return starCells.reduce((map, { position }, index) => {
+    starCells.forEach(({ position: pos }, secondIndex) => {
       if (index === secondIndex) {
         return;
       }
@@ -72,23 +77,24 @@ export const run: DayEntryPoint = (input) => {
     });
     return map;
   }, new Map<string, number>());
-  // console.log(
-  //   s,
-  //   expandedUniverse[0].length,
-  //   expandedUniverse.length,
-  //   universe[0].length,
-  //   universe.length,
-  // );
-  console.log(
-    "first",
-    [...s.values()].reduce((acc, v) => acc + v, 0),
-  );
-
-  // display(expandedUniverse);
 };
 
-const display = (universe: string[][]) => {
-  console.log(
-    universe.map((cell) => cell.map((line) => line).join("")).join("\n"),
-  );
+const sum = (a: number, b: number) => a + b;
+
+const solve = (universe: Cell[][], expand: number) => {
+  const starCells = expandGalaxies(universe, expand);
+  const distances = getDistances(starCells);
+  return [...distances.values()].reduce(sum, 0);
+};
+
+export const run: DayEntryPoint = (input) => {
+  const universe = input
+    .split("\n")
+    .map((line) => line.split(""))
+    .map((line, y) =>
+      line.map((rawCell, x): Cell => ({ position: { x, y }, letter: rawCell })),
+    );
+
+  console.log("first", solve(universe, 2));
+  console.log("second", solve(universe, 1_000_000));
 };
