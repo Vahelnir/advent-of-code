@@ -8,9 +8,8 @@ type Position = { x: number; y: number };
 type Cell = {
   position: Position;
   letter: string;
-  previousNode?: Cell;
-  distance: number;
-  visited: boolean;
+  isLoop: boolean;
+  isInLoop: boolean;
 };
 
 const isPipe = (pipe: Cell) => PIPE_LETTERS.includes(pipe.letter as PipeLetter);
@@ -77,40 +76,29 @@ const findLoop = (grid: Cell[][], startingPoint: Cell) => {
       if (newPath) {
         return newPath;
       }
-      path;
     }
   };
 
   return recursive(startingPoint, []);
 };
 
-const depthFirstSearch = (grid: Cell[][], startingPoint: Cell) => {
-  const stack = [startingPoint];
-  while (stack.length > 0) {
-    const pipe = stack.pop();
-    if (!pipe || !isPipe(pipe)) {
-      continue;
+const solveSecond = (grid: Cell[][]) => {
+  const horizontal: Cell[] = [];
+  for (let y = 0; y < grid.length; y++) {
+    let isInLoop = false;
+    for (let x = 0; x < grid[0].length; x++) {
+      const cell = grid[y][x];
+      if (cell.letter === "." && isInLoop) {
+        horizontal.push(cell);
+      }
+      if (["|", "L", "J"].includes(cell.letter) && cell.isLoop) {
+        isInLoop = !isInLoop;
+      }
     }
-
-    const adjacentCells = getAdjacentCells(grid, pipe);
-    const start = adjacentCells.find(({ letter }) => letter === "S");
-    if (start) {
-      start.previousNode = pipe;
-    }
-    adjacentCells
-      .filter(({ visited }) => !visited)
-      .forEach((cell) => {
-        const newDistance = pipe.distance + 1;
-        if (cell.distance > newDistance) {
-          return;
-        }
-
-        cell.distance = newDistance;
-        cell.previousNode = pipe;
-        stack.unshift(cell);
-      });
-    pipe.visited = true;
   }
+  horizontal.forEach((c) => (c.isInLoop = true));
+
+  console.log(horizontal.length);
 };
 
 export const run: DayEntryPoint = (input) => {
@@ -119,9 +107,8 @@ export const run: DayEntryPoint = (input) => {
       (cell, x): Cell => ({
         position: { x, y },
         letter: cell,
-        previousNode: undefined,
-        distance: 0,
-        visited: false,
+        isLoop: false,
+        isInLoop: false,
       }),
     ),
   );
@@ -133,14 +120,19 @@ export const run: DayEntryPoint = (input) => {
     return;
   }
 
-  // console.log(findLoop(grid, startingCell)?.length);
-  // depthFirstSearch(grid, startingCell);
-  // display(grid);
-  console.log("first", (findLoop(grid, startingCell)?.length ?? 0) / 2);
+  const loop = findLoop(grid, startingCell);
+  console.log("first", (loop?.length ?? 0) / 2);
+  loop?.forEach((c) => (c.isLoop = true));
+  console.log("second", solveSecond(grid));
+  display(grid);
 };
 
 const display = (grid: Cell[][]) => {
   console.log(
-    grid.map((line) => line.map((line) => line.distance).join("")).join("\n"),
+    grid
+      .map((line) =>
+        line.map((line) => (line.isInLoop ? "*" : line.letter)).join(""),
+      )
+      .join("\n"),
   );
 };
