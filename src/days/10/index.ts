@@ -82,23 +82,23 @@ const findLoop = (grid: Cell[][], startingPoint: Cell) => {
   return recursive(startingPoint, []);
 };
 
+// seems to be working for my input, but shouldn't (example 1 part 2 returns 6 but should be 7)
 const solveSecond = (grid: Cell[][]) => {
   const horizontal: Cell[] = [];
   for (let y = 0; y < grid.length; y++) {
     let isInLoop = false;
     for (let x = 0; x < grid[0].length; x++) {
       const cell = grid[y][x];
-      if (cell.letter === "." && isInLoop) {
-        horizontal.push(cell);
-      }
-      if (["|", "L", "J"].includes(cell.letter) && cell.isLoop) {
+      if (["|", "L", "J", "S"].includes(cell.letter) && cell.isLoop) {
         isInLoop = !isInLoop;
+      } else if (isInLoop && !cell.isLoop) {
+        horizontal.push(cell);
       }
     }
   }
   horizontal.forEach((c) => (c.isInLoop = true));
 
-  console.log(horizontal.length);
+  return horizontal.length;
 };
 
 export const run: DayEntryPoint = (input) => {
@@ -124,14 +124,18 @@ export const run: DayEntryPoint = (input) => {
   console.log("first", (loop?.length ?? 0) / 2);
   loop?.forEach((c) => (c.isLoop = true));
   console.log("second", solveSecond(grid));
-  display(grid);
+  // display(grid);
 };
 
 const display = (grid: Cell[][]) => {
   console.log(
     grid
       .map((line) =>
-        line.map((line) => (line.isInLoop ? "*" : line.letter)).join(""),
+        line
+          .map((line) =>
+            line.isInLoop ? "*" : line.isLoop ? "&" : line.letter,
+          )
+          .join(""),
       )
       .join("\n"),
   );
