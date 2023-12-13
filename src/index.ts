@@ -20,19 +20,14 @@ async function solveDay(day: string) {
   const dayPath = join(dayDirectory, "index");
   const inputPath = join(dayDirectory, "input.txt");
 
-  try {
-    const dayModule = await import(dayPath);
-    if (!dayModule.run) {
-      console.log("cannot run day", day);
-      return;
-    }
-
-    const input = await readInput(inputPath);
-    dayModule.run(input);
-  } catch (error) {
-    console.log("no day", day, "found");
-    console.error(error);
+  const dayModule = await import(dayPath);
+  if (!dayModule.run) {
+    console.log("cannot run day", day);
+    return;
   }
+
+  const input = await readInput(inputPath);
+  dayModule.run(input);
 }
 
 run().catch(console.error);
