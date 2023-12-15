@@ -144,20 +144,6 @@ const cycle = memoize(
 const solveSecond = (originalGrid: string[][]) => {
   let grid = originalGrid.map((line) => line.slice());
 
-  // const getMovingRocksPositions = () =>
-  //   grid
-  //     .flatMap((line, y) =>
-  //       line.map((cell, x) => (cell === "O" ? { x, y } : undefined)),
-  //     )
-  //     .filter((pos): pos is Position => pos !== undefined);
-  //
-  // const previousMovingRocksPositions = getMovingRocksPositions().reduce(
-  //   (acc, pos) => {
-  //     acc.set(JSON.stringify(pos), 0);
-  //     return acc;
-  //   },
-  //   new Map<string, number>(),
-  // );
   for (let i = 0; i < 1_000_000_000; i++) {
     if (i % 100_000_000 === 0) {
       console.log(i + 1, "/", 1_000_000_000);
