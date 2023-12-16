@@ -3,6 +3,7 @@ import { DayEntryPoint } from "../../types/DayEntryPoint";
 type Cell = { letter: string; position: Position; energized: boolean };
 type Position = { x: number; y: number };
 type Direction = "right" | "left" | "up" | "down";
+type DirectedPosition = { position: Position; direction: Direction };
 
 const move = ({ x, y }: Position, direction: Direction) => {
   if (direction === "left") {
@@ -23,32 +24,6 @@ const move = ({ x, y }: Position, direction: Direction) => {
 const VERTICAL_DIRECTIONS = ["up", "down"];
 const HORIZONTAL_DIRECTIONS = ["left", "right"];
 
-// if (currentCell === "|" && HORIZONTAL_DIRECTIONS.includes(direction)) {
-//   return [
-//     ...traverse(grid, move({ x, y }, "up"), "up").map((positions) => [
-//       { x, y },
-//       ...positions,
-//     ]),
-//     ...traverse(grid, move({ x, y }, "down"), "down").map((positions) => [
-//       { x, y },
-//       ...positions,
-//     ]),
-//   ];
-// }
-//
-// if (currentCell === "-" && VERTICAL_DIRECTIONS.includes(direction)) {
-//   return [
-//     ...traverse(grid, move({ x, y }, "left"), "left").map((positions) => [
-//       { x, y },
-//       ...positions,
-//     ]),
-//     ...traverse(grid, move({ x, y }, "right"), "right").map((positions) => [
-//       { x, y },
-//       ...positions,
-//     ]),
-//   ];
-// }
-
 const SLASH_MIRROR_MAPPINGS: Record<Direction, Direction> = {
   up: "right",
   left: "down",
@@ -63,15 +38,69 @@ const BACKSLASH_MIRROR_MAPPINGS: Record<Direction, Direction> = {
   right: "down",
 };
 
-const traverse = (originalGrid: Cell[][]) => {
+const getNextPositions = (
+  position: Position,
+  cell: Cell,
+  direction: Direction,
+): DirectedPosition[] => {
+  if (
+    cell.letter === "." ||
+    (cell.letter === "|" && VERTICAL_DIRECTIONS.includes(direction)) ||
+    (cell.letter === "-" && HORIZONTAL_DIRECTIONS.includes(direction))
+  ) {
+    return [{ position: move(position, direction), direction }];
+  }
+
+  if (cell.letter === "|" && HORIZONTAL_DIRECTIONS.includes(direction)) {
+    return [
+      { position: move(position, "up"), direction: "up" },
+      { position: move(position, "down"), direction: "down" },
+    ];
+  }
+
+  if (cell.letter === "-" && VERTICAL_DIRECTIONS.includes(direction)) {
+    return [
+      { position: move(position, "left"), direction: "left" },
+      { position: move(position, "right"), direction: "right" },
+    ];
+  }
+
+  if (cell.letter === "/") {
+    const newDirection = SLASH_MIRROR_MAPPINGS[direction];
+    return [
+      {
+        position: move(position, newDirection),
+        direction: newDirection,
+      },
+    ];
+  }
+
+  if (cell.letter === "\\") {
+    const newDirection = BACKSLASH_MIRROR_MAPPINGS[direction];
+    return [
+      {
+        position: move(position, newDirection),
+        direction: newDirection,
+      },
+    ];
+  }
+
+  return [];
+};
+
+const traverse = (
+  originalGrid: Cell[][],
+  initialPosition: Position,
+  initialDirection: Direction,
+) => {
   const grid = originalGrid.map((line) => line.map((cell) => ({ ...cell })));
 
-  const visitedDirections = new Set<string>();
-  const cellStack: { position: Position; direction: Direction }[] = [
-    { position: { x: 0, y: 0 }, direction: "right" },
+  const visitedPositions = new Set<string>();
+  const positionStack: DirectedPosition[] = [
+    { position: initialPosition, direction: initialDirection },
   ];
-  while (cellStack.length > 0) {
-    const poppedValue = cellStack.pop();
+  while (positionStack.length > 0) {
+    const poppedValue = positionStack.pop();
     if (!poppedValue) {
       break;
     }
@@ -88,56 +117,20 @@ const traverse = (originalGrid: Cell[][]) => {
     const cell = grid[position.y][position.x];
 
     const visitedCellString = `${position.x};${position.y};${direction}`;
-    if (visitedDirections.has(visitedCellString)) {
+    if (visitedPositions.has(visitedCellString)) {
       continue;
     }
-    visitedDirections.add(visitedCellString);
+    visitedPositions.add(visitedCellString);
 
-    if (
-      cell.letter === "." ||
-      (cell.letter === "|" && VERTICAL_DIRECTIONS.includes(direction)) ||
-      (cell.letter === "-" && HORIZONTAL_DIRECTIONS.includes(direction))
-    ) {
-      cellStack.push({ position: move(cell.position, direction), direction });
-      continue;
-    }
-
-    if (cell.letter === "|" && HORIZONTAL_DIRECTIONS.includes(direction)) {
-      cellStack.push(
-        { position: move(position, "up"), direction: "up" },
-        { position: move(position, "down"), direction: "down" },
-      );
-      continue;
-    }
-
-    if (cell.letter === "-" && VERTICAL_DIRECTIONS.includes(direction)) {
-      cellStack.push(
-        { position: move(position, "left"), direction: "left" },
-        { position: move(position, "right"), direction: "right" },
-      );
-      continue;
-    }
-
-    if (cell.letter === "/") {
-      const newDirection = SLASH_MIRROR_MAPPINGS[direction];
-      cellStack.push({
-        position: move(position, newDirection),
-        direction: newDirection,
-      });
-      continue;
-    }
-
-    if (cell.letter === "\\") {
-      const newDirection = BACKSLASH_MIRROR_MAPPINGS[direction];
-      cellStack.push({
-        position: move(position, newDirection),
-        direction: newDirection,
-      });
-      continue;
-    }
+    positionStack.push(...getNextPositions(position, cell, direction));
   }
 
-  return visitedDirections;
+  const energizedPositions = new Set(
+    [...visitedPositions.values()]
+      .map((value) => value.split(";"))
+      .map(([x, y]) => `${x};${y}`),
+  );
+  return energizedPositions.size;
 };
 
 export const run: DayEntryPoint = (input) => {
@@ -152,11 +145,30 @@ export const run: DayEntryPoint = (input) => {
         ),
     );
 
-  const traversedPositions = traverse(grid);
-  const energizedPositions = new Set(
-    [...traversedPositions.values()]
-      .map((value) => value.split(";"))
-      .map(([x, y]) => `${x};${y}`),
-  );
-  console.log("first", energizedPositions.size);
+  console.log("first", traverse(grid, { x: 0, y: 0 }, "right"));
+
+  let max = 0;
+  for (let x = 0; x < grid[0].length; x++) {
+    max = Math.max(max, traverse(grid, { x, y: 0 }, "down"));
+    max = Math.max(max, traverse(grid, { x, y: grid.length - 1 }, "up"));
+
+    if (x === 0 || x === grid[0].length - 1) {
+      max = Math.max(
+        max,
+        traverse(grid, { x, y: 0 }, x === 0 ? "right" : "left"),
+      );
+      max = Math.max(
+        max,
+        traverse(grid, { x, y: grid.length - 1 }, x === 0 ? "right" : "left"),
+      );
+      for (let y = 1; y < grid.length - 1; y++) {
+        max = Math.max(
+          max,
+          traverse(grid, { x, y }, x === 0 ? "left" : "right"),
+        );
+      }
+    }
+  }
+
+  console.log("second", max);
 };
