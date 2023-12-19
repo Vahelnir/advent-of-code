@@ -4,7 +4,7 @@ type Direction = (typeof ALLOWED_DIRECTIONS)[number];
 type Position = { x: number; y: number };
 type Dig = { direction: Direction; length: number; color: string };
 
-const ALLOWED_DIRECTIONS = ["R", "L", "U", "D"] as const;
+const ALLOWED_DIRECTIONS = ["R", "D", "L", "U"] as const;
 
 const line = (from: Position, to: Position) => {
   if (from.x === to.x) {
@@ -130,6 +130,19 @@ const fillOutside = (grid: string[][], position: Position) => {
   }
 };
 
+const solveFirst = (digPlan: Dig[]) => {
+  const grid = parseGrid(digPlan);
+
+  const topLeftCorner = { x: 0, y: 0 };
+  const bottomRightCorner = { x: grid[0].length - 1, y: grid.length - 1 };
+  fillOutside(grid, topLeftCorner);
+  fillOutside(grid, { ...bottomRightCorner, y: 0 });
+  fillOutside(grid, bottomRightCorner);
+  fillOutside(grid, { ...bottomRightCorner, x: 0 });
+
+  return grid.flat().filter((letter) => "#.".includes(letter)).length;
+};
+
 export const run: DayEntryPoint = (input) => {
   const digPlan: Dig[] = input
     .split("\n")
@@ -140,16 +153,15 @@ export const run: DayEntryPoint = (input) => {
       color: color.replace("(", "").replace(")", ""),
     }));
 
-  const grid = parseGrid(digPlan);
-  const topLeftCorner = { x: 0, y: 0 };
-  const bottomRightCorner = { x: grid[0].length - 1, y: grid.length - 1 };
-  fillOutside(grid, topLeftCorner);
-  fillOutside(grid, { ...bottomRightCorner, y: 0 });
-  fillOutside(grid, bottomRightCorner);
-  fillOutside(grid, { ...bottomRightCorner, x: 0 });
-
+  console.log("first", solveFirst(digPlan));
   console.log(
-    "first",
-    grid.flat().filter((letter) => "#.".includes(letter)).length,
+    "second",
+    solveFirst(
+      digPlan.map((dig) => {
+        const length = parseInt(dig.color.slice(1, -1), 16);
+        const direction = ALLOWED_DIRECTIONS[Number(dig.color.slice(-1))];
+        return { length, direction, color: "" };
+      }),
+    ),
   );
 };
