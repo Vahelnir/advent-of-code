@@ -1,16 +1,16 @@
 import { DayEntryPoint } from "../../types/DayEntryPoint";
 
-type DependencyNode = { dependencies: number[]; allDependencies: Set<number> };
+type DependencyNode = number[];
 
 function getDependencyGraphFromRules(rules: string[]) {
   const graph = new Map<number, DependencyNode>();
   for (const rule of rules) {
     const [dependency, dependent] = rule.split("|").map(Number);
     if (!graph.has(dependent)) {
-      graph.set(dependent, { dependencies: [], allDependencies: new Set() });
+      graph.set(dependent, []);
     }
 
-    graph.get(dependent)?.dependencies.push(dependency);
+    graph.get(dependent)?.push(dependency);
   }
 
   return graph;
@@ -28,7 +28,7 @@ function areUpdatesValid(
       continue;
     }
 
-    const missingDependency = node.dependencies.find(
+    const missingDependency = node.find(
       (dependency) => updates.includes(dependency) && !visited.has(dependency)
     );
     if (missingDependency) {
@@ -69,10 +69,10 @@ function solvePartTwo(
 
   const sortedUpdatesList = invalidUpdatesList.map((updates) =>
     updates.toSorted((a, b) => {
-      if (dependencyGraph.get(a)?.dependencies.includes(b)) {
+      if (dependencyGraph.get(a)?.includes(b)) {
         return 1;
       }
-      if (dependencyGraph.get(b)?.dependencies.includes(a)) {
+      if (dependencyGraph.get(b)?.includes(a)) {
         return -1;
       }
       return 0;
