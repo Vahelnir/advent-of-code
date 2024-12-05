@@ -32,19 +32,57 @@ function areUpdatesValid(
       (dependency) => updates.includes(dependency) && !visited.has(dependency)
     );
     if (missingDependency) {
-      // console.log("Visited:", visited, "Updates:", updates);
-      // console.log(
-      //   missingDependency,
-      //   "is missing for",
-      //   update,
-      //   updates.includes(missingDependency),
-      //   !visited.has(missingDependency)
-      // );
       return false;
     }
   }
 
   return true;
+}
+
+function getMiddlePage(updates: number[]) {
+  const middlePageIndex = Math.floor(updates.length / 2);
+  return updates[middlePageIndex];
+}
+
+function solvePartOne(
+  rawUpdates: string[],
+  dependencyGraph: Map<number, DependencyNode>
+) {
+  const validUpdatesList = rawUpdates
+    .map((raw) => raw.split(",").map(Number))
+    .filter((updates) => areUpdatesValid(updates, dependencyGraph));
+  const middlePages = validUpdatesList.map(getMiddlePage);
+
+  console.log(
+    "first part:",
+    middlePages.reduce((acc, curr) => acc + curr, 0)
+  );
+}
+
+function solvePartTwo(
+  rawUpdates: string[],
+  dependencyGraph: Map<number, DependencyNode>
+) {
+  const invalidUpdatesList = rawUpdates
+    .map((raw) => raw.split(",").map(Number))
+    .filter((updates) => !areUpdatesValid(updates, dependencyGraph));
+
+  const sortedUpdatesList = invalidUpdatesList.map((updates) =>
+    updates.toSorted((a, b) => {
+      if (dependencyGraph.get(a)?.dependencies.includes(b)) {
+        return 1;
+      }
+      if (dependencyGraph.get(b)?.dependencies.includes(a)) {
+        return -1;
+      }
+      return 0;
+    })
+  );
+  const middlePages = sortedUpdatesList.map(getMiddlePage);
+  console.log(
+    "second part:",
+    middlePages.reduce((acc, curr) => acc + curr, 0)
+  );
 }
 
 export const run: DayEntryPoint = (input) => {
@@ -53,22 +91,7 @@ export const run: DayEntryPoint = (input) => {
   const rawUpdates = rawUpdateBlock.split("\n");
 
   const dependencyGraph = getDependencyGraphFromRules(rawRules);
-  // for (const [nodeId, node] of dependencyGraph.entries()) {
-  //   node.allDependencies
-  // }
-  const middlePages: number[] = [];
-  for (const rawUpdate of rawUpdates) {
-    const updates = rawUpdate.split(",").map(Number);
-    if (areUpdatesValid(updates, dependencyGraph)) {
-      console.log("Valid update:", updates);
-      const middlePageIndex = Math.floor(updates.length / 2);
-      middlePages.push(updates[middlePageIndex]);
-    }
-  }
 
-  console.log(
-    "first part:",
-    middlePages.join(","),
-    middlePages.reduce((acc, curr) => acc + curr, 0)
-  );
+  solvePartOne(rawUpdates, dependencyGraph);
+  solvePartTwo(rawUpdates, dependencyGraph);
 };
