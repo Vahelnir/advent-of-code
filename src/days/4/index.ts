@@ -1,94 +1,83 @@
 import { DayEntryPoint } from "../../types/DayEntryPoint";
 
-function getCharactersOnVector(
-  grid: string[][],
-  from: { x: number; y: number },
-  to: { x: number; y: number }
-) {
-  const characters = [];
-  const xDiff = to.x - from.x;
-  const yDiff = to.y - from.y;
-  const length = Math.max(Math.abs(xDiff), Math.abs(yDiff));
-  for (let i = 0; i < length; i++) {
-    const x = from.x + (xDiff * i) / length;
-    const y = from.y + (yDiff * i) / length;
-    if (x < 0 || y < 0 || x >= grid[0].length || y >= grid.length) {
-      break;
+class Pattern {
+  private pattern: string[][];
+  private wildcardChar: string;
+
+  constructor(pattern: string[] | string[][], wildcardChar = ".") {
+    this.pattern = pattern.map((row) =>
+      typeof row === "string" ? row.split("") : row
+    );
+    this.wildcardChar = wildcardChar;
+  }
+
+  match(grid: string[][], from: { x: number; y: number }) {
+    const debugCoordinates = new Set<string>();
+    for (let y = 0; y < this.pattern.length; y++) {
+      for (let x = 0; x < this.pattern[y].length; x++) {
+        if (this.pattern[y][x] === this.wildcardChar) {
+          continue;
+        }
+
+        if (grid?.[from.y + y]?.[from.x + x] !== this.pattern[y][x]) {
+          return false;
+        }
+
+        debugCoordinates.add(`${from.y + y};${from.x + x}`);
+      }
     }
 
-    characters.push(grid[y][x]);
+    return { debugCoordinates };
   }
-  return characters.join("");
+
+  mirror(direction: "horizontal" | "vertical") {
+    if (direction === "horizontal") {
+      return new Pattern(this.pattern.reverse(), this.wildcardChar);
+    }
+
+    return new Pattern(
+      this.pattern.map((row) => [...row].reverse().join("")),
+      this.wildcardChar
+    );
+  }
+
+  toString() {
+    return this.pattern.map((row) => row.join("")).join("\n");
+  }
 }
 
-function hasWordAt(
-  grid: string[][],
-  word: string,
-  position: { y: number; x: number },
-  direction: "diagonal-down" | "diagonal-up" | "horizontal" | "vertical"
-) {
-  // horizontal position
-  let endPosition = {
-    ...position,
-    x: position.x + word.length,
-  };
-  if (direction === "vertical") {
-    endPosition = {
-      ...position,
-      y: position.y + word.length,
-    };
-  } else if (direction === "diagonal-down") {
-    endPosition = {
-      x: position.x + word.length,
-      y: position.y + word.length,
-    };
-  } else if (direction === "diagonal-up") {
-    endPosition = {
-      x: position.x + word.length,
-      y: position.y - word.length,
-    };
-  }
-  const foundWord = getCharactersOnVector(grid, position, endPosition);
-  return foundWord === word || foundWord === [...word].reverse().join("");
-}
+const VERTICAL_XMAS = new Pattern(["X", "M", "A", "S"]);
+const HORIZONTAL_XMAS = new Pattern(["XMAS"]);
+const DIAGONAL_DOWN_XMAS = new Pattern(["X...", ".M..", "..A.", "...S"]);
+const DIAGONAL_UP_XMAS = new Pattern(["...S", "..A.", ".M..", "X..."]);
 
 export const run: DayEntryPoint = (input) => {
   const grid = input.split("\n").map((row) => row.split(""));
 
   let count = 0;
-  const foundLetters = new Set<string>();
+  const patterns = [
+    VERTICAL_XMAS,
+    VERTICAL_XMAS.mirror("horizontal"),
+    HORIZONTAL_XMAS,
+    HORIZONTAL_XMAS.mirror("vertical"),
+    DIAGONAL_DOWN_XMAS,
+    DIAGONAL_UP_XMAS.mirror("horizontal").mirror("vertical"),
+    DIAGONAL_UP_XMAS,
+    DIAGONAL_DOWN_XMAS.mirror("horizontal").mirror("vertical"),
+  ];
+  console.log(patterns.map((pattern) => pattern.toString()).join("\n\n"));
+
+  const debugCoordinates = new Set<string>();
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[y].length; x++) {
-      if (hasWordAt(grid, "XMAS", { y: y, x: x }, "horizontal")) {
-        foundLetters.add(`${y};${x}`);
-        foundLetters.add(`${y};${x + 1}`);
-        foundLetters.add(`${y};${x + 2}`);
-        foundLetters.add(`${y};${x + 3}`);
-        count++;
-      }
-
-      if (hasWordAt(grid, "XMAS", { y: y, x: x }, "vertical")) {
-        foundLetters.add(`${y};${x}`);
-        foundLetters.add(`${y + 1};${x}`);
-        foundLetters.add(`${y + 2};${x}`);
-        foundLetters.add(`${y + 3};${x}`);
-        count++;
-      }
-
-      if (hasWordAt(grid, "XMAS", { y: y, x: x }, "diagonal-down")) {
-        foundLetters.add(`${y};${x}`);
-        foundLetters.add(`${y + 1};${x + 1}`);
-        foundLetters.add(`${y + 2};${x + 2}`);
-        foundLetters.add(`${y + 3};${x + 3}`);
-        count++;
-      }
-
-      if (hasWordAt(grid, "XMAS", { y: y, x: x }, "diagonal-up")) {
-        foundLetters.add(`${y};${x}`);
-        foundLetters.add(`${y - 1};${x + 1}`);
-        foundLetters.add(`${y - 2};${x + 2}`);
-        foundLetters.add(`${y - 3};${x + 3}`);
-        count++;
+      for (const pattern of patterns) {
+        const found = pattern.match(grid, { x, y });
+        if (found) {
+          found.debugCoordinates.forEach((coord) =>
+            debugCoordinates.add(coord)
+          );
+          count++;
+        }
       }
     }
   }
@@ -96,11 +85,12 @@ export const run: DayEntryPoint = (input) => {
   const emptyGrid = new Array(grid.length)
     .fill(null)
     .map(() => new Array(grid[0].length).fill("."));
-  for (const coordinateString of foundLetters) {
+  for (const coordinateString of debugCoordinates) {
     const [y, x] = coordinateString.split(";").map(Number);
     emptyGrid[y][x] = grid[y][x];
   }
 
+  console.log();
   console.log(emptyGrid.map((row) => row.join("")).join("\n"));
 
   console.log("first part:", count);
