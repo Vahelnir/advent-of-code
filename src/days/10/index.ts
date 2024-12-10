@@ -49,13 +49,24 @@ export const run: DayEntryPoint = (input) => {
   }
   console.log("trailheads", trailheads.length);
   console.log(
+    "part one:",
     [...trailheadPaths.entries()]
       .map(
         ([, paths]) => new Set(paths.map((path) => nodeToString(path[9]))).size
       )
       .reduce((acc, val) => acc + val, 0)
   );
+  console.log(
+    "part two:",
+    [...trailheadPaths.entries()]
+      .map(([, paths]) => new Set(paths.map(pathToString)).size)
+      .reduce((acc, val) => acc + val, 0)
+  );
 };
+
+function pathToString(path: Node[]): string {
+  return path.map(nodeToString).join(" -> ");
+}
 
 function nodeToString(node: Node): string {
   return `${node.position.x},${node.position.y}`;
