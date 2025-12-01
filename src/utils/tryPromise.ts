@@ -3,7 +3,7 @@ export type TryPromise<Result> =
   | { success: false; error: unknown; result: undefined };
 
 export const tryPromise = async <Result>(
-  promise: Promise<Result>
+  promise: Promise<Result>,
 ): Promise<TryPromise<Result>> => {
   try {
     return { success: true, result: await promise, error: undefined };
