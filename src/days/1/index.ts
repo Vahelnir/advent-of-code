@@ -26,11 +26,14 @@ export const run: DayEntryPoint = (input) => {
   let foundZeros = 0;
   let position = START_DIAL_VALUE;
   for (const value of values) {
-    position = circularMod(position, value, MAX_DIAL_VALUE);
-    console.log(position);
-    if (position === 0) {
-      foundZeros++;
+    for (let step = 0; step < Math.abs(value); step++) {
+      const stepValue = value > 0 ? 1 : -1;
+      position = circularMod(position, stepValue, MAX_DIAL_VALUE);
+      if (position === 0) {
+        foundZeros++;
+      }
     }
+    console.log(position);
   }
 
   console.log("Day 1 Part 1:", foundZeros);
