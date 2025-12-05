@@ -22,9 +22,10 @@ export const run: DayEntryPoint = async (input) => {
 
   const optimizedIntervals: ValueInterval[] = [];
   let last: ValueInterval | null = null;
-  for (const interval of intervals.toSorted(
+  const sortedIntervals = intervals.toSorted(
     (a, b) => a.start - b.start || a.end - b.end,
-  )) {
+  );
+  for (const interval of sortedIntervals) {
     if (last === null) {
       optimizedIntervals.push(interval);
       last = interval;
