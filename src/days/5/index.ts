@@ -47,4 +47,11 @@ export const run: DayEntryPoint = async (input) => {
       intervals.some(({ start, end }) => value >= start && value <= end),
     ).length,
   );
+
+  console.log(
+    "part 2:",
+    optimizedIntervals
+      .map(({ start, end }) => end - start + 1)
+      .reduce((a, b) => a + b, 0),
+  );
 };
