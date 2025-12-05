@@ -20,6 +20,27 @@ export const run: DayEntryPoint = async (input) => {
   });
   const values = rawValues.split("\n").map(Number);
 
+  const optimizedIntervals: ValueInterval[] = [];
+  let last: ValueInterval | null = null;
+  for (const interval of intervals.toSorted(
+    (a, b) => a.start - b.start || a.end - b.end,
+  )) {
+    if (last === null) {
+      optimizedIntervals.push(interval);
+      last = interval;
+      continue;
+    }
+
+    if (last.end < interval.start) {
+      optimizedIntervals.push(interval);
+      last = interval;
+    } else {
+      last.end = Math.max(last.end, interval.end);
+    }
+  }
+
+  console.log(optimizedIntervals.length, intervals.length);
+
   console.log(
     "part 1:",
     values.filter((value) =>
