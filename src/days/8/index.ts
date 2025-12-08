@@ -23,45 +23,37 @@ export const run: DayEntryPoint = async (input) => {
     )
     .map(([x, y, z]) => ({ x, y, z }));
 
-  const allDistances = new Map<string, number>();
-  const distanceMap = new Map<string, Map<string, number>>();
+  const allDistances = new Set<string>();
   for (let i = 0; i < points.length; i++) {
     const pointA = points[i]!;
     const keyA = vectorToKey(pointA);
-    const distanceTargets = distanceMap.get(keyA) || new Map<string, number>();
-    for (let j = 0; j < points.length; j++) {
-      if (i === j) {
-        continue;
-      }
-
+    for (let j = i + 1; j < points.length; j++) {
       const pointB = points[j]!;
       const keyB = vectorToKey(pointB);
-      const dist = distance(pointA, pointB);
-      allDistances.set(
-        keyA < keyB ? `${keyA}|${keyB}` : `${keyB}|${keyA}`,
-        dist,
+      allDistances.add(
+        pointA.x < pointB.x ? `${keyA}|${keyB}` : `${keyB}|${keyA}`,
       );
-      distanceTargets.set(keyB, dist);
     }
-
-    distanceMap.set(keyA, distanceTargets);
   }
 
   const circuits: Set<string>[] = points.map(
     (point) => new Set([vectorToKey(point)]),
   );
-  let sortedPairs = Array.from(allDistances.entries())
-    .map(([key, distance]) => {
+  let sortedPairs = Array.from(allDistances)
+    .map((key) => {
       const [keyA, keyB] = key.split("|") as [string, string];
+      const pointA = keyToVector(keyA);
+      const pointB = keyToVector(keyB);
       return {
-        pointA: keyToVector(keyA),
-        pointB: keyToVector(keyB),
-        distance,
+        pointA,
+        pointB,
+        distance: distance(pointA, pointB),
       };
     })
     .toSorted((a, b) => a.distance - b.distance);
-  for (let i = 0; i < sortedPairs.length; i++) {
-    const pair = sortedPairs[i]!;
+  let loopCount = 0;
+  while (circuits.length > 1) {
+    const pair = sortedPairs[loopCount++]!;
     const circuitA = circuits.find((circuit) =>
       circuit.has(vectorToKey(pair.pointA)),
     );
@@ -77,15 +69,20 @@ export const run: DayEntryPoint = async (input) => {
       circuits[firstCircuitIndex] = circuitA.union(circuitB);
       circuits.splice(circuits.indexOf(circuitB), 1);
     }
-    if (i === 1000) {
-      break;
+
+    if (loopCount === 1000) {
+      const [a, b, c] = circuits.toSorted((a, b) => b.size - a.size);
+      if (!a || !b || !c) {
+        throw new Error("Less than 3 circuits found");
+      }
+      console.log(a.size * b.size * c.size, circuits.length);
     }
   }
 
-  const [a, b, c] = circuits.toSorted((a, b) => b.size - a.size);
-  if (!a || !b || !c) {
-    throw new Error("Less than 3 circuits found");
+  const lastPair = sortedPairs[loopCount - 1];
+  if (!lastPair) {
+    throw new Error("No more pairs available");
   }
-  // console.log(a, b, c);
-  console.log(a.size * b.size * c.size, circuits.length);
+
+  console.log(lastPair.pointA.x * lastPair.pointB.x);
 };
