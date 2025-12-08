@@ -17,20 +17,14 @@ export const run: DayEntryPoint = async (input) => {
   const lines = input.split("\n").filter((line) => line.trim().length > 0);
 
   const columnData = parseOperators(lines[lines.length - 1]!);
-  const rows: string[][] = [];
-  for (let x = 0; x < lines.length - 1; x++) {
-    const row = [];
-    let y = 0;
-    for (let i = 0; i < columnData.length; i++) {
-      const expectedSpaces = columnData[i]!.columnSize;
-      const actualSpaces = lines[x]!.slice(y, y + expectedSpaces);
-      row.push(actualSpaces.replaceAll(" ", "0"));
-      y += expectedSpaces + 1;
-    }
-    rows.push(row);
-  }
+  const rows = parseRowsFromColumnData(lines, columnData);
   const operators = columnData.map((c) => c.operator);
 
+  partOne(operators, rows);
+  partTwo(operators, rows);
+};
+
+function partOne(operators: string[], rows: string[][]) {
   let total = 0;
   for (let i = 0; i < operators.length; i++) {
     const operator = operators[i]!;
@@ -52,7 +46,9 @@ export const run: DayEntryPoint = async (input) => {
   }
 
   console.log("part 1:", total);
+}
 
+function partTwo(operators: string[], rows: string[][]) {
   const columns: string[][] = [];
   for (let x = 0; x < rows[0]!.length; x++) {
     let values: string[] = [];
@@ -91,5 +87,23 @@ export const run: DayEntryPoint = async (input) => {
     "part 2:",
     aaa.reduce((acc, v) => acc + v, 0),
   );
-  // tested wrong answers: 11505532772069, 11448320285833
-};
+}
+
+function parseRowsFromColumnData(
+  lines: string[],
+  columnData: { columnSize: number; operator: string }[],
+) {
+  const rows: string[][] = [];
+  for (let x = 0; x < lines.length - 1; x++) {
+    const row = [];
+    let y = 0;
+    for (let i = 0; i < columnData.length; i++) {
+      const expectedSpaces = columnData[i]!.columnSize;
+      const actualSpaces = lines[x]!.slice(y, y + expectedSpaces);
+      row.push(actualSpaces.replaceAll(" ", "0"));
+      y += expectedSpaces + 1;
+    }
+    rows.push(row);
+  }
+  return rows;
+}
