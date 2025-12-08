@@ -71,4 +71,10 @@ export const run: DayEntryPoint = async (input) => {
   }
 
   console.log("part 1:", splitCount);
+
+  for (const visitedPos of visited) {
+    const [x, y] = visitedPos.split(",").map(Number);
+    grid[y!]![x!] = grid[y!]![x!] === "." ? "|" : grid[y!]![x!]!;
+  }
+  console.log(grid.map((line) => line.join("")).join("\n"));
 };
