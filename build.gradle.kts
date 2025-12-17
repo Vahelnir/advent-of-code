@@ -1,30 +1,34 @@
 plugins {
-  kotlin("jvm") version "2.2.21"
+    kotlin("jvm") version "2.2.21"
 }
 
 group = "fr.vahelnir"
 version = "1.0-SNAPSHOT"
 
 repositories {
-  mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-  testImplementation(kotlin("test"))
+    testImplementation(kotlin("test"))
 }
 
 kotlin {
-  jvmToolchain(21)
+    jvmToolchain(21)
 }
 
 tasks.test {
-  useJUnitPlatform()
+    useJUnitPlatform()
 }
 
 tasks.register<JavaExec>("start") {
-  group = "application"
-  description = "Lance l'application principale."
+    group = "application"
+    description = "Lance l'application principale."
 
-  mainClass.set("fr.vahelnir.MainKt")
-  classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("fr.vahelnir.MainKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    val day = project.findProperty("day") as? String
+    if (day != null) {
+        args = listOf(day)
+    }
 }

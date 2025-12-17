@@ -9,10 +9,21 @@ fun readInputFile(day: Int): List<String> = object {}
 
 val solvers = mapOf<Int, DaySolver>(
     1 to fr.vahelnir.solvers.Day1()
+    // ...ajoute d'autres solvers ici si besoin...
 )
 
-fun main() {
-    val day = 1
+fun main(args: Array<String>) {
+    if (args.isEmpty()) {
+        println("Usage: <jour>")
+        return
+    }
+
+    val day = args[0].toIntOrNull()
+    if (day == null) {
+        println("Argument invalide: ${args[0]}")
+        return
+    }
+    
     val solver = solvers[day]
     if (solver == null) {
         println("No solver found for day $day")
