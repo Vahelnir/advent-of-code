@@ -7,9 +7,9 @@ fun readInputFile(day: Int): List<String> = object {}
     ?.lines()
     ?: error("File not found")
 
-val solvers = mapOf<Int, DaySolver>(
-    1 to fr.vahelnir.solvers.Day1()
-    // ...ajoute d'autres solvers ici si besoin...
+val solvers = mapOf(
+    1 to fr.vahelnir.solvers.Day1(),
+    2 to fr.vahelnir.solvers.Day2(),
 )
 
 fun main(args: Array<String>) {
@@ -23,7 +23,7 @@ fun main(args: Array<String>) {
         println("Argument invalide: ${args[0]}")
         return
     }
-    
+
     val solver = solvers[day]
     if (solver == null) {
         println("No solver found for day $day")
