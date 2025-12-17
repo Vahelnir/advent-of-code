@@ -21,60 +21,53 @@ export const run: DayEntryPoint = async (input) => {
     throw new Error("Invalid start position");
   }
 
-  let splitCount = 0;
+  type State = { x: number; y: number };
 
-  const nodes: { x: number; y: number; type: NodeType }[] = [
-    { x: startX, y: startY, type: "S" },
-  ];
+  const stack: State[] = [{ x: startX, y: startY }];
   const visited = new Set<string>();
-  while (nodes.length > 0) {
-    const node = nodes.pop()!;
-    const currentValue = gridMap.get(`${node.x},${node.y}`);
-    if (currentValue === undefined || visited.has(`${node.x},${node.y}`)) {
+
+  let timelines = 0;
+  let splitCount = 0;
+  while (stack.length > 0) {
+    const { x, y } = stack.pop()!;
+    const key = `${x},${y}`;
+    if (visited.has(key)) {
+      continue;
+    }
+    // visited.add(key);
+
+    if (y === grid.length - 1) {
+      timelines++;
       continue;
     }
 
-    visited.add(`${node.x},${node.y}`);
+    const currentValue = gridMap.get(`${x},${y}`);
+    if (currentValue === undefined) {
+      continue;
+    }
 
-    if ([".", "S"].includes(currentValue)) {
-      const newPos = { x: node.x, y: node.y + 1 };
-      const type = gridMap.get(`${newPos.x},${newPos.y}`);
-      if (type === undefined) {
-        continue;
-      }
-
-      nodes.push({
-        x: newPos.x,
-        y: newPos.y,
-        type: type,
-      });
+    if (currentValue === "." || currentValue === "S") {
+      stack.push({ x, y: y + 1 });
     } else if (currentValue === "^") {
       splitCount++;
-      const positions = [
-        { x: node.x - 1, y: node.y },
-        { x: node.x + 1, y: node.y },
-      ]
-        .map((p) => {
-          const type = gridMap.get(`${p.x},${p.y}`);
-          if (type === undefined) {
-            return undefined;
-          }
-
-          return { ...p, type };
-        })
-        .filter(
-          (b): b is { x: number; y: number; type: NodeType } => b !== undefined,
-        );
-
-      nodes.push(...positions);
+      stack.push({ x: x - 1, y });
+      stack.push({ x: x + 1, y });
     }
   }
 
-  console.log("part 1:", splitCount);
-
   for (const visitedPos of visited) {
-    const [x, y] = visitedPos.split(",").map(Number);
-    grid[y!]![x!] = grid[y!]![x!] === "." ? "|" : grid[y!]![x!]!;
+    const [xStr, yStr] = visitedPos.split(",");
+    const x = Number(xStr);
+    const y = Number(yStr);
+    if (Number.isFinite(x) && Number.isFinite(y) && y >= 0 && y < grid.length) {
+      const row = grid[y];
+      if (row && x >= 0 && x < row.length && row[x] === ".") {
+        row[x] = "|";
+      }
+    }
   }
+
   console.log(grid.map((line) => line.join("")).join("\n"));
+  console.log("part 1:", splitCount);
+  console.log("part 2:", timelines);
 };
