@@ -10,26 +10,36 @@ class Day2 : DaySolver {
             .toMutableList()
 
         val firstProgram = code.toMutableList()
-        firstProgram[1] = 12
-        firstProgram[2] = 2
-        val result = run(firstProgram)
-        println("Part 1: ${result}")
+        val result = run(firstProgram, 12, 2)
+        println("Part 1: $result")
+        println("Part 2: ${solvePartTwo(code)}")
     }
 
-    fun run(program: List<Int>): Int {
+    fun solvePartTwo(program: List<Int>): Int {
+        for (noun in 0..99) {
+            for (verb in 0..99) {
+                val output = run(program, noun, verb)
+                if (output == 19690720) {
+                    return 100 * noun + verb
+                }
+            }
+        }
+
+        return 0
+    }
+
+    fun run(program: List<Int>, noun: Int, verb: Int): Int {
         val code = program.toMutableList()
+        code[1] = noun
+        code[2] = verb
         var index = 0
         while (index < code.size) {
-            val opcode = code[index++]
-            println(opcode)
-
-            when (opcode) {
+            when (val opcode = code[index++]) {
                 99 -> break
                 1 -> {
                     val position1 = code[index++]
                     val position2 = code[index++]
                     val position3 = code[index++]
-                    println("$position1, $position2, $position3")
                     code[position3] = code[position1] + code[position2]
                 }
 
