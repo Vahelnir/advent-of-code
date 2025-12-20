@@ -10,6 +10,7 @@ fun readInputFile(day: Int): List<String> = object {}
 val solvers = mapOf(
     1 to fr.vahelnir.solvers.Day1(),
     2 to fr.vahelnir.solvers.Day2(),
+    3 to fr.vahelnir.solvers.Day3(),
 )
 
 fun main(args: Array<String>) {
